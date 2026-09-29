@@ -1,0 +1,17 @@
+# Maven build output
+target/
+
+# Uploaded evidence / runtime files
+uploads/
+
+# Environment / local secrets
+.env
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db

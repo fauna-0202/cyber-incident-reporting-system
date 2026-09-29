@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investigator Case Workspace | CIRS</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar" id="main-navbar"></nav>
+
+  <main class="container" style="max-width: 1050px;">
+    <div style="margin-bottom: 1.5rem;">
+      <a href="/investigator/dashboard.html" style="font-size: 0.85rem; color: var(--text-muted);">&larr; Back to Case Queue</a>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 0.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Digital Forensics & Incident Workspace</span>
+          <h1 id="inc-number" class="mono" style="font-size: 1.85rem; font-weight: 700; color: var(--cyber-cyan);">Case #</h1>
+        </div>
+        <div id="status-badges" style="display: flex; gap: 0.5rem; align-items: center;"></div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+      <!-- Left Column: Case Dossier & Activity -->
+      <div>
+        <!-- Incident Narrative & Details -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" id="inc-title">Case Title</div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+            <div>
+              <span style="color: var(--text-muted); display: block;">Category</span>
+              <strong id="inc-category">-</strong>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); display: block;">Reported Date</span>
+              <strong id="inc-date">-</strong>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); display: block;">Affected Target / IP</span>
+              <strong id="inc-ip" class="mono">-</strong>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); display: block;">Citizen Reporter</span>
+              <strong id="inc-reporter" style="color: var(--cyber-cyan);">-</strong>
+            </div>
+          </div>
+
+          <div>
+            <h4 style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.4rem;">Incident Summary & Findings</h4>
+            <div id="inc-desc" style="white-space: pre-wrap; font-size: 0.9rem; background: rgba(31, 41, 55, 0.4); padding: 0.85rem; border-radius: 8px; border: 1px solid var(--border-color); line-height: 1.6;">
+              -
+            </div>
+          </div>
+        </div>
+
+        <!-- Evidence Artifacts -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Secured Evidence Files & Hashes</div>
+          </div>
+          <div id="evidence-container">
+            <div style="color: var(--text-muted); font-size: 0.85rem;">No evidence files attached.</div>
+          </div>
+        </div>
+
+        <!-- Investigation Stream -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Investigation Activity & Notes Log</div>
+          </div>
+          <div class="timeline" id="notes-timeline">
+            <div style="color: var(--text-muted); font-size: 0.85rem;">Loading timeline...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Investigator Controls -->
+      <div>
+        <!-- Update Case Status -->
+        <div class="card" style="border-top: 3px solid var(--cyber-cyan);">
+          <div class="card-title" style="font-size: 1.1rem; margin-bottom: 1rem;">
+            ⚙️ Transition Status
+          </div>
+          <form id="status-form">
+            <div class="form-group">
+              <label class="form-label" for="new-status">Target Workflow Status</label>
+              <select id="new-status" class="form-control" required>
+                <option value="INVESTIGATING">INVESTIGATING - Active forensics</option>
+                <option value="NEED_MORE_INFORMATION">NEED_MORE_INFORMATION - Request info</option>
+                <option value="RESOLVED">RESOLVED - Incident remediated</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="status-comment">Transition Rationale *</label>
+              <textarea id="status-comment" class="form-control" placeholder="Explain the rationale for this status transition..." required style="min-height: 80px;"></textarea>
+            </div>
+            <button type="submit" id="status-btn" class="btn btn-primary" style="width: 100%;">
+              Execute Status Change
+            </button>
+          </form>
+        </div>
+
+        <!-- Add Note / Communication -->
+        <div class="card" style="border-top: 3px solid var(--cyber-indigo);">
+          <div class="card-title" style="font-size: 1.1rem; margin-bottom: 1rem;">
+            ✍️ Add Case Note
+          </div>
+          <form id="note-form">
+            <div class="form-group">
+              <label class="form-label" for="note-type">Note Classification</label>
+              <select id="note-type" class="form-control" required>
+                <option value="INTERNAL_NOTE" selected>🔒 INTERNAL NOTE (Confidential SOC)</option>
+                <option value="PUBLIC_UPDATE">📢 PUBLIC UPDATE (Visible to Citizen)</option>
+                <option value="INFO_REQUEST">❓ REQUEST INFO (Prompts Citizen)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="note-content">Note Content *</label>
+              <textarea id="note-content" class="form-control" placeholder="Enter investigative findings or citizen instructions..." required style="min-height: 100px;"></textarea>
+            </div>
+            <button type="submit" id="note-btn" class="btn btn-secondary" style="width: 100%;">
+              Append Note
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Cyber Incident Reporting System (CIRS)</p>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const incidentNumber = urlParams.get('id');
+
+    async function loadWorkspace() {
+      if (!incidentNumber) {
+        alert('Missing incident ID.');
+        window.location.href = '/investigator/dashboard.html';
+        return;
+      }
+
+      try {
+        const res = await CIRS.api.get(`/incidents/${incidentNumber}`);
+        if (res.success && res.data) {
+          const inc = res.data;
+          document.getElementById('inc-number').innerText = inc.incidentNumber;
+          document.getElementById('inc-title').innerText = inc.title;
+          document.getElementById('inc-category').innerText = inc.categoryName;
+          document.getElementById('inc-date').innerText = CIRS.ui.formatDate(inc.incidentDate);
+          document.getElementById('inc-ip').innerText = inc.locationIp || 'N/A';
+          document.getElementById('inc-reporter').innerText = `${inc.reporterName} (${inc.reporterEmail})`;
+          document.getElementById('inc-desc').innerText = inc.description;
+
+          document.getElementById('status-badges').innerHTML = `
+            ${CIRS.ui.getStatusBadge(inc.status)}
+            ${CIRS.ui.getSeverityBadge(inc.severity)}
+          `;
+
+          // Evidence
+          const evContainer = document.getElementById('evidence-container');
+          if (inc.attachments && inc.attachments.length > 0) {
+            evContainer.innerHTML = inc.attachments.map(att => `
+              <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:0.6rem 1rem; border-radius:8px; border:1px solid #374151; margin-bottom:0.5rem;">
+                <div>
+                  <strong style="color:var(--text-primary); font-size:0.9rem;">📄 ${att.originalFilename}</strong>
+                  <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
+                    ${(att.fileSizeBytes/1024).toFixed(1)} KB &bull; ${att.mimeType} &bull; SHA-256: <span class="mono">${att.sha256Hash}</span>
+                  </div>
+                </div>
+                <button onclick="downloadEvidence('${inc.incidentNumber}', ${att.id}, '${att.originalFilename}')" class="btn btn-secondary btn-sm">
+                  ⬇️ Inspect / Download
+                </button>
+              </div>
+            `).join('');
+          } else {
+            evContainer.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem;">No evidence files attached.</div>';
+          }
+
+          // Notes Timeline
+          const tlContainer = document.getElementById('notes-timeline');
+          if (inc.notes && inc.notes.length > 0) {
+            tlContainer.innerHTML = inc.notes.map(n => {
+              const isInternal = n.noteType === 'INTERNAL_NOTE';
+              return `
+                <div class="timeline-item">
+                  <div class="timeline-header">
+                    <span class="timeline-author">${n.authorName} <small style="color:var(--text-muted); font-weight:normal;">(${n.authorRole.replace('ROLE_', '')})</small></span>
+                    <span class="timeline-time">${CIRS.ui.formatDate(n.createdAt)}</span>
+                  </div>
+                  <div class="timeline-body ${isInternal ? 'timeline-internal' : ''}">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem;">
+                      <span style="font-size:0.72rem; text-transform:uppercase; font-weight:700; color:${isInternal ? 'var(--cyber-purple)' : 'var(--cyber-cyan)'};">
+                        ${isInternal ? '🔒 CONFIDENTIAL INTERNAL NOTE' : n.noteType.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    ${n.content}
+                  </div>
+                </div>
+              `;
+            }).join('');
+          } else {
+            tlContainer.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem;">No activity recorded yet.</div>';
+          }
+        }
+      } catch (err) {
+        console.error('Error loading workspace', err);
+        alert(err.message || 'Error loading incident');
+        window.location.href = '/investigator/dashboard.html';
+      }
+    }
+
+    window.downloadEvidence = async function(incNum, attId, filename) {
+      try {
+        const token = CIRS.auth.getToken();
+        const res = await fetch(`/api/v1/incidents/${incNum}/attachments/${attId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Download unauthorized or file unavailable.');
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (err) {
+        CIRS.ui.showToast(err.message || 'Failed to download file', 'danger');
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!CIRS.auth.checkRoleAndRedirect(['ROLE_INVESTIGATOR', 'ROLE_ADMIN'])) return;
+      CIRS.ui.renderNavbar();
+      loadWorkspace();
+
+      // Submit Status Update
+      document.getElementById('status-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const status = document.getElementById('new-status').value;
+        const comment = document.getElementById('status-comment').value.trim();
+        const btn = document.getElementById('status-btn');
+
+        btn.disabled = true;
+        btn.innerText = 'Transitioning...';
+
+        try {
+          const res = await CIRS.api.patch(`/incidents/${incidentNumber}/status`, { status, comment });
+          if (res.success) {
+            CIRS.ui.showToast(`Case status transitioned to ${status}!`, 'success');
+            document.getElementById('status-comment').value = '';
+            loadWorkspace();
+          }
+        } catch (err) {
+          CIRS.ui.showToast(err.message || 'Failed to update status', 'danger');
+        } finally {
+          btn.disabled = false;
+          btn.innerText = 'Execute Status Change';
+        }
+      });
+
+      // Submit Note
+      document.getElementById('note-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const noteType = document.getElementById('note-type').value;
+        const content = document.getElementById('note-content').value.trim();
+        const btn = document.getElementById('note-btn');
+
+        btn.disabled = true;
+        btn.innerText = 'Posting...';
+
+        try {
+          const res = await CIRS.api.post(`/incidents/${incidentNumber}/notes`, { noteType, content });
+          if (res.success) {
+            CIRS.ui.showToast('Note added to case file', 'success');
+            document.getElementById('note-content').value = '';
+            loadWorkspace();
+          }
+        } catch (err) {
+          CIRS.ui.showToast(err.message || 'Failed to append note', 'danger');
+        } finally {
+          btn.disabled = false;
+          btn.innerText = 'Append Note';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investigator Case Queue | CIRS</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar" id="main-navbar"></nav>
+
+  <main class="container">
+    <div style="margin-bottom: 2rem;">
+      <h1 style="font-size: 1.85rem; font-weight: 700;">Investigator Case Queue</h1>
+      <p style="color: var(--text-secondary); font-size: 0.9rem;">
+        Incidents officially assigned to you for digital forensic analysis, citizen triage, and threat mitigation.
+      </p>
+    </div>
+
+    <!-- Case Metrics -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-label">Assigned Cases</span>
+        <span class="stat-value" id="stat-total" style="color: var(--cyber-cyan);">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Active Investigation</span>
+        <span class="stat-value" id="stat-investigating" style="color: var(--cyber-indigo);">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Awaiting Citizen Info</span>
+        <span class="stat-value" id="stat-need-info" style="color: var(--cyber-amber);">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Resolved by You</span>
+        <span class="stat-value" id="stat-resolved" style="color: var(--cyber-emerald);">0</span>
+      </div>
+    </div>
+
+    <!-- Cases Table -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Assigned Cyber Incident Files</div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Case Number</th>
+              <th>Category</th>
+              <th>Severity</th>
+              <th>Incident Title</th>
+              <th>Reporting Citizen</th>
+              <th>Status</th>
+              <th>Evidence</th>
+              <th>Assigned Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="cases-tbody">
+            <tr>
+              <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading assigned cases...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Cyber Incident Reporting System (CIRS)</p>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!CIRS.auth.checkRoleAndRedirect(['ROLE_INVESTIGATOR', 'ROLE_ADMIN'])) return;
+      CIRS.ui.renderNavbar('dashboard');
+
+      try {
+        const res = await CIRS.api.get('/incidents/assigned?size=50');
+        const tbody = document.getElementById('cases-tbody');
+
+        if (res.success && res.data && res.data.content) {
+          const list = res.data.content;
+
+          document.getElementById('stat-total').innerText = list.length;
+          document.getElementById('stat-investigating').innerText = list.filter(i => i.status === 'INVESTIGATING').length;
+          document.getElementById('stat-need-info').innerText = list.filter(i => i.status === 'NEED_MORE_INFORMATION').length;
+          document.getElementById('stat-resolved').innerText = list.filter(i => ['RESOLVED', 'CLOSED'].includes(i.status)).length;
+
+          if (list.length === 0) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="9" style="text-align: center; padding: 3rem 1rem;">
+                  <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
+                  <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">No Cases Assigned</div>
+                  <p style="color: var(--text-muted); font-size: 0.85rem;">You currently have no pending incidents assigned for investigation.</p>
+                </td>
+              </tr>
+            `;
+            return;
+          }
+
+          tbody.innerHTML = list.map(item => `
+            <tr>
+              <td><a href="/investigator/incident-workspace.html?id=${item.incidentNumber}" class="mono" style="font-weight:600;">${item.incidentNumber}</a></td>
+              <td>${item.categoryName}</td>
+              <td>${CIRS.ui.getSeverityBadge(item.severity)}</td>
+              <td style="max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${item.title}">
+                <strong>${item.title}</strong>
+              </td>
+              <td>${item.reporterName}</td>
+              <td>${CIRS.ui.getStatusBadge(item.status)}</td>
+              <td>📎 ${item.attachmentCount} file(s)</td>
+              <td>${CIRS.ui.formatDate(item.createdAt)}</td>
+              <td>
+                <a href="/investigator/incident-workspace.html?id=${item.incidentNumber}" class="btn btn-primary btn-sm">
+                  Open Workspace &rarr;
+                </a>
+              </td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Error fetching investigator cases', err);
+        CIRS.ui.showToast(err.message || 'Failed to load case queue', 'danger');
+      }
+    });
+  </script>
+</body>
+</html>

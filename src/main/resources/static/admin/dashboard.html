@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CISO & Administrator Control Center | CIRS</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar" id="main-navbar"></nav>
+
+  <main class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 style="font-size: 1.85rem; font-weight: 700;">Security Control Center</h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+          Enterprise overview of cyber threats, triage workload, case assignment, and active defense operations.
+        </p>
+      </div>
+      <div style="display: flex; gap: 0.75rem;">
+        <a href="/admin/incidents.html" class="btn btn-primary btn-sm">🚨 Manage Incidents</a>
+        <a href="/admin/audit-logs.html" class="btn btn-secondary btn-sm">📜 Audit Trail</a>
+      </div>
+    </div>
+
+    <!-- Metric Cards Grid -->
+    <div class="stat-grid" id="stats-grid">
+      <div class="stat-card">
+        <span class="stat-label">Total Incidents</span>
+        <span class="stat-value" id="stat-total">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Submitted / Pending Triage</span>
+        <span class="stat-value" id="stat-submitted" style="color: var(--cyber-blue);">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Active Forensics</span>
+        <span class="stat-value" id="stat-investigating" style="color: var(--cyber-indigo);">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Resolved / Closed</span>
+        <span class="stat-value" id="stat-resolved" style="color: var(--cyber-emerald);">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Registered Citizens</span>
+        <span class="stat-value" id="stat-users">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Active Investigators</span>
+        <span class="stat-value" id="stat-investigators" style="color: var(--cyber-purple);">0</span>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+      <!-- Recent Incidents Table -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Recent Cyber Incident Submissions</div>
+          <a href="/admin/incidents.html" style="font-size: 0.85rem;">View Full Registry &rarr;</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Case #</th>
+                <th>Category</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Investigator</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="recent-tbody">
+              <tr>
+                <td colspan="6" style="text-align:center; color:var(--text-muted); padding:1.5rem;">Loading recent incidents...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Threat Category Breakdown -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Threat Categories</div>
+        </div>
+        <div id="category-bars" style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.85rem;">
+          <div style="color: var(--text-muted);">Calculating telemetry...</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Cyber Incident Reporting System (CIRS)</p>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!CIRS.auth.checkRoleAndRedirect(['ROLE_ADMIN'])) return;
+      CIRS.ui.renderNavbar('dashboard');
+
+      try {
+        const res = await CIRS.api.get('/admin/dashboard/stats');
+        if (res.success && res.data) {
+          const stats = res.data;
+
+          document.getElementById('stat-total').innerText = stats.totalIncidents;
+          document.getElementById('stat-submitted').innerText = stats.submittedCount + stats.underReviewCount;
+          document.getElementById('stat-investigating').innerText = stats.investigatingCount + stats.assignedCount;
+          document.getElementById('stat-resolved').innerText = stats.resolvedCount + stats.closedCount;
+          document.getElementById('stat-users').innerText = stats.totalUsers;
+          document.getElementById('stat-investigators').innerText = stats.totalInvestigators;
+
+          // Recent Incidents
+          const tbody = document.getElementById('recent-tbody');
+          if (stats.recentIncidents && stats.recentIncidents.length > 0) {
+            tbody.innerHTML = stats.recentIncidents.map(inc => `
+              <tr>
+                <td><a href="/user/incident-details.html?id=${inc.incidentNumber}" class="mono">${inc.incidentNumber}</a></td>
+                <td>${inc.categoryName}</td>
+                <td>${CIRS.ui.getSeverityBadge(inc.severity)}</td>
+                <td>${CIRS.ui.getStatusBadge(inc.status)}</td>
+                <td style="font-size:0.8rem; color:${inc.investigatorName==='Unassigned'?'var(--cyber-amber)':'inherit'};">
+                  ${inc.investigatorName}
+                </td>
+                <td>
+                  <a href="/admin/incidents.html?search=${inc.incidentNumber}" class="btn btn-secondary btn-sm" style="font-size:0.75rem; padding:0.2rem 0.5rem;">
+                    Manage
+                  </a>
+                </td>
+              </tr>
+            `).join('');
+          } else {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No incidents recorded.</td></tr>';
+          }
+
+          // Category distribution
+          const catContainer = document.getElementById('category-bars');
+          const dist = stats.categoryDistribution || {};
+          const keys = Object.keys(dist);
+          const maxVal = Math.max(...Object.values(dist), 1);
+
+          if (keys.length > 0) {
+            catContainer.innerHTML = keys.map(k => {
+              const count = dist[k];
+              const pct = ((count / maxVal) * 100).toFixed(0);
+              return `
+                <div>
+                  <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
+                    <span>${k}</span>
+                    <strong class="mono" style="color:var(--cyber-cyan);">${count}</strong>
+                  </div>
+                  <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:9999px; overflow:hidden;">
+                    <div style="height:100%; width:${pct}%; background:linear-gradient(90deg, var(--cyber-cyan), var(--cyber-indigo)); border-radius:9999px;"></div>
+                  </div>
+                </div>
+              `;
+            }).join('');
+          } else {
+            catContainer.innerHTML = '<div style="color:var(--text-muted);">No distribution data available.</div>';
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load dashboard statistics', err);
+        CIRS.ui.showToast(err.message || 'Error fetching stats', 'danger');
+      }
+    });
+  </script>
+</body>
+</html>

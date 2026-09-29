@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In | Cyber Incident Reporting System</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar" id="main-navbar"></nav>
+
+  <main class="container" style="max-width: 480px; display: flex; flex-direction: column; justify-content: center; min-height: 75vh;">
+    <div class="card">
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <div class="brand-shield" style="margin: 0 auto 0.75rem; width: 48px; height: 48px; font-size: 1.5rem;">🛡️</div>
+        <h1 style="font-size: 1.5rem; font-weight: 700;">Secure Portal Access</h1>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">Enter your credentials to access the incident reporting system</p>
+      </div>
+
+      <div id="login-alert" class="alert alert-danger" style="display: none;"></div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="username">Username or Email</label>
+          <input type="text" id="username" class="form-control" placeholder="e.g. user1 or admin@cirs.gov" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input type="password" id="password" class="form-control" placeholder="••••••••••••" required>
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+          Authenticate & Enter
+        </button>
+      </form>
+
+     
+    
+
+      <div style="text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+        Don't have an account? <a href="/register.html">Register here</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Cyber Incident Reporting System (CIRS)</p>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+   
+
+    document.addEventListener('DOMContentLoaded', () => {
+      CIRS.ui.renderNavbar();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('session_expired')) {
+        const alertBox = document.getElementById('login-alert');
+        alertBox.innerText = 'Your security session has expired. Please authenticate again.';
+        alertBox.style.display = 'block';
+      }
+
+      document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alertBox = document.getElementById('login-alert');
+        const submitBtn = document.getElementById('submit-btn');
+        alertBox.style.display = 'none';
+
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Verifying credentials...';
+
+        try {
+          const res = await CIRS.api.post('/auth/login', { username, password });
+          if (res.success && res.data) {
+            CIRS.auth.setSession(res.data.token, res.data);
+            
+            // Redirect based on role
+            const role = res.data.role;
+            const redirectParam = urlParams.get('redirect');
+            if (redirectParam && redirectParam.startsWith('/')) {
+              window.location.href = redirectParam;
+            } else if (role === 'ROLE_ADMIN') {
+              window.location.href = '/admin/dashboard.html';
+            } else if (role === 'ROLE_INVESTIGATOR') {
+              window.location.href = '/investigator/dashboard.html';
+            } else {
+              window.location.href = '/user/dashboard.html';
+            }
+          }
+        } catch (err) {
+          alertBox.innerText = err.message || 'Login failed. Please verify your credentials.';
+          alertBox.style.display = 'block';
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Authenticate & Enter';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

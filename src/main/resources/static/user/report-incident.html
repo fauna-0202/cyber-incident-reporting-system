@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Cyber Incident | CIRS</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar" id="main-navbar"></nav>
+
+  <main class="container" style="max-width: 800px;">
+    <div style="margin-bottom: 2rem;">
+      <a href="/user/dashboard.html" style="font-size: 0.85rem; color: var(--text-muted);">&larr; Back to Incident Dashboard</a>
+      <h1 style="font-size: 1.85rem; font-weight: 700; margin-top: 0.5rem;">Report a Cyber Incident</h1>
+      <p style="color: var(--text-secondary); font-size: 0.9rem;">
+        Provide comprehensive details and supporting evidence to assist cyber investigators with triage and mitigation.
+      </p>
+    </div>
+
+    <div id="form-alert" class="alert alert-danger" style="display: none;"></div>
+
+    <form id="incident-form" class="card">
+      <div class="form-group">
+        <label class="form-label" for="categoryId">Incident Category *</label>
+        <select id="categoryId" class="form-control" required>
+          <option value="" disabled selected>-- Select Incident Category --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="title">Incident Title *</label>
+        <input type="text" id="title" class="form-control" placeholder="e.g. Unauthorized wire transfer attempt via spoofed email" required minlength="5" maxlength="200">
+        <small style="color: var(--text-muted); font-size: 0.75rem;">A brief summary describing the nature of the event.</small>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="incidentDate">Date & Time of Incident *</label>
+          <input type="datetime-local" id="incidentDate" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="severity">Perceived Severity *</label>
+          <select id="severity" class="form-control" required>
+            <option value="LOW">Low - Minimal operational impact</option>
+            <option value="MEDIUM" selected>Medium - Noticeable disruption</option>
+            <option value="HIGH">High - Significant financial or data loss</option>
+            <option value="CRITICAL">Critical - Active ransomware / systemic breach</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="locationIp">Affected Systems, Domains or IP Address (Optional)</label>
+        <input type="text" id="locationIp" class="form-control" placeholder="e.g. 192.168.1.100, server-db01, or scam-domain.com">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="description">Comprehensive Incident Description *</label>
+        <textarea id="description" class="form-control" placeholder="Provide a chronological account: How was the attack detected? What systems or data are affected? What immediate actions were taken?" required minlength="10"></textarea>
+      </div>
+
+      <!-- Secure Evidence Upload Section -->
+      <div class="form-group">
+        <label class="form-label">Supporting Evidence & Artifacts (Optional)</label>
+        <div class="file-dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
+          <div class="dropzone-icon">📁</div>
+          <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">
+            Click to upload or drag and drop files here
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">
+            Permitted formats: .pdf, .png, .jpg, .pcap, .txt, .docx, .zip, .eml (Max 15MB each)
+          </div>
+          <input type="file" id="file-input" multiple style="display: none;">
+        </div>
+        <div id="file-list" style="margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;"></div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+        <a href="/user/dashboard.html" class="btn btn-secondary">Cancel</a>
+        <button type="submit" id="submit-btn" class="btn btn-primary" style="min-width: 180px;">
+          Submit Incident Report
+        </button>
+      </div>
+    </form>
+
+    <!-- Success Modal with Incident ID -->
+    <div class="modal-overlay" id="success-modal">
+      <div class="modal-dialog" style="text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 0.5rem;">✅</div>
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Incident Report Lodged</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+          Your report has been securely registered in the national registry and queued for triage.
+        </p>
+
+        <div style="background: rgba(31, 41, 55, 0.7); border: 1px dashed var(--cyber-cyan); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display:block;">Your Unique Incident Tracking Number</span>
+          <span id="modal-incident-id" class="mono" style="font-size: 1.5rem; font-weight: 700; color: var(--cyber-cyan);">CIR-XXXXXXXX-XXXXX</span>
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 1rem;">
+          <a id="view-details-btn" href="#" class="btn btn-primary">Track This Case Now</a>
+          <a href="/user/dashboard.html" class="btn btn-secondary">Go to Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Cyber Incident Reporting System (CIRS)</p>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    let selectedFiles = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!CIRS.auth.checkRoleAndRedirect(['ROLE_USER'])) return;
+      CIRS.ui.renderNavbar('report');
+
+      // Set default incident date to current local timestamp
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      document.getElementById('incidentDate').value = now.toISOString().slice(0, 16);
+
+      // Load Categories
+      try {
+        const catRes = await CIRS.api.get('/categories');
+        if (catRes.success && catRes.data) {
+          const select = document.getElementById('categoryId');
+          catRes.data.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat.id;
+            opt.innerText = cat.name;
+            select.appendChild(opt);
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load categories', err);
+      }
+
+      // File Drag & Drop Handling
+      const dropzone = document.getElementById('dropzone');
+      const fileInput = document.getElementById('file-input');
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          dropzone.classList.add('dragover');
+        }, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropzone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          dropzone.classList.remove('dragover');
+        }, false);
+      });
+
+      dropzone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        handleFiles(dt.files);
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+      });
+
+      function handleFiles(files) {
+        for (let file of files) {
+          if (file.size > 15 * 1024 * 1024) {
+            CIRS.ui.showToast(`File ${file.name} exceeds 15MB limit and was skipped.`, 'danger');
+            continue;
+          }
+          selectedFiles.push(file);
+        }
+        renderFileList();
+      }
+
+      function renderFileList() {
+        const listDiv = document.getElementById('file-list');
+        listDiv.innerHTML = '';
+        selectedFiles.forEach((f, idx) => {
+          const item = document.createElement('div');
+          item.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:0.4rem 0.8rem; border-radius:6px; font-size:0.85rem; border:1px solid #374151;';
+          item.innerHTML = `
+            <span>📄 ${f.name} <small style="color:var(--text-muted);">(${(f.size/1024).toFixed(1)} KB)</small></span>
+            <button type="button" class="btn btn-danger btn-sm" style="padding:0.15rem 0.4rem; font-size:0.75rem;" onclick="removeFile(${idx})">&times; Remove</button>
+          `;
+          listDiv.appendChild(item);
+        });
+      }
+
+      window.removeFile = function(index) {
+        selectedFiles.splice(index, 1);
+        renderFileList();
+      };
+
+      // Form Submit
+      document.getElementById('incident-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alertBox = document.getElementById('form-alert');
+        const submitBtn = document.getElementById('submit-btn');
+        alertBox.style.display = 'none';
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Transmitting report...';
+
+        const formData = new FormData();
+        formData.append('categoryId', document.getElementById('categoryId').value);
+        formData.append('title', document.getElementById('title').value.trim());
+        formData.append('description', document.getElementById('description').value.trim());
+        formData.append('incidentDate', document.getElementById('incidentDate').value);
+        formData.append('severity', document.getElementById('severity').value);
+        formData.append('locationIp', document.getElementById('locationIp').value.trim());
+
+        selectedFiles.forEach(file => {
+          formData.append('files', file);
+        });
+
+        try {
+          const res = await CIRS.api.postMultipart('/incidents', formData);
+          if (res.success && res.data) {
+            document.getElementById('modal-incident-id').innerText = res.data.incidentNumber;
+            document.getElementById('view-details-btn').href = `/user/incident-details.html?id=${res.data.incidentNumber}`;
+            document.getElementById('success-modal').classList.add('active');
+          }
+        } catch (err) {
+          alertBox.innerText = err.message || 'Failed to submit incident report.';
+          alertBox.style.display = 'block';
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Submit Incident Report';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

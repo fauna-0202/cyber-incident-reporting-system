@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Incident Details & Tracking | CIRS</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar" id="main-navbar"></nav>
+
+  <main class="container" style="max-width: 900px;">
+    <div style="margin-bottom: 1.5rem;">
+      <a href="/user/dashboard.html" style="font-size: 0.85rem; color: var(--text-muted);">&larr; Back to My Reports</a>
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 0.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <span style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Incident Report</span>
+          <h1 id="inc-number" class="mono" style="font-size: 1.85rem; font-weight: 700; color: var(--cyber-cyan);">Loading...</h1>
+        </div>
+        <div id="status-badges" style="display: flex; gap: 0.5rem; align-items: center;"></div>
+      </div>
+    </div>
+
+    <!-- Need More Information Callout -->
+    <div id="need-info-callout" class="card" style="display:none; border-color: var(--cyber-amber); background: rgba(245, 158, 11, 0.1);">
+      <div class="card-title" style="color: var(--cyber-amber);">
+        ⚠️ Additional Information Requested by Investigator
+      </div>
+      <p style="font-size: 0.9rem; color: var(--text-secondary); margin: 0.5rem 0 1rem;">
+        The assigned investigator requires further clarification to proceed with this case. Please review their inquiry below and provide a response.
+      </p>
+      <form id="respond-form">
+        <div class="form-group">
+          <label class="form-label">Your Response / Clarification *</label>
+          <textarea id="reply-text" class="form-control" placeholder="Provide requested details..." required style="min-height: 90px;"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Upload Supplementary Evidence (Optional)</label>
+          <input type="file" id="reply-files" class="form-control" multiple>
+        </div>
+        <button type="submit" id="reply-submit-btn" class="btn btn-primary btn-sm">
+          Submit Clarification to Investigator
+        </button>
+      </form>
+    </div>
+
+    <!-- Main Incident Info -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title" id="inc-title">Loading title...</div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); font-size: 0.85rem;">
+        <div>
+          <span style="color: var(--text-muted); display: block;">Category</span>
+          <strong id="inc-category" style="color: var(--text-primary); font-size: 0.95rem;">-</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); display: block;">Incident Date</span>
+          <strong id="inc-date" style="color: var(--text-primary); font-size: 0.95rem;">-</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); display: block;">Affected System / IP</span>
+          <strong id="inc-ip" class="mono" style="color: var(--text-primary); font-size: 0.95rem;">-</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); display: block;">Assigned Investigator</span>
+          <strong id="inc-investigator" style="color: var(--cyber-purple); font-size: 0.95rem;">-</strong>
+        </div>
+      </div>
+
+      <div>
+        <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-secondary);">Incident Narrative</h3>
+        <div id="inc-desc" style="white-space: pre-wrap; font-size: 0.92rem; background: rgba(31, 41, 55, 0.4); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); line-height: 1.6;">
+          -
+        </div>
+      </div>
+    </div>
+
+    <!-- Evidence Files -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Attached Evidence & Artifacts</div>
+      </div>
+      <div id="evidence-container">
+        <div style="color: var(--text-muted); font-size: 0.85rem;">No evidence files attached.</div>
+      </div>
+    </div>
+
+    <!-- Investigation Timeline & Updates -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Case Activity & Timeline</div>
+      </div>
+      <div class="timeline" id="notes-timeline">
+        <div style="color: var(--text-muted); font-size: 0.85rem;">Loading activity timeline...</div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Cyber Incident Reporting System (CIRS)</p>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const incidentNumber = urlParams.get('id');
+
+    async function loadIncident() {
+      if (!incidentNumber) {
+        alert('Missing incident ID.');
+        window.location.href = '/user/dashboard.html';
+        return;
+      }
+
+      try {
+        const res = await CIRS.api.get(`/incidents/${incidentNumber}`);
+        if (res.success && res.data) {
+          const inc = res.data;
+          document.getElementById('inc-number').innerText = inc.incidentNumber;
+          document.getElementById('inc-title').innerText = inc.title;
+          document.getElementById('inc-category').innerText = inc.categoryName;
+          document.getElementById('inc-date').innerText = CIRS.ui.formatDate(inc.incidentDate);
+          document.getElementById('inc-ip').innerText = inc.locationIp || 'Not specified';
+          document.getElementById('inc-investigator').innerText = inc.assignedInvestigatorName || 'Pending Assignment';
+          document.getElementById('inc-desc').innerText = inc.description;
+
+          document.getElementById('status-badges').innerHTML = `
+            ${CIRS.ui.getStatusBadge(inc.status)}
+            ${CIRS.ui.getSeverityBadge(inc.severity)}
+          `;
+
+          // Handle NEED_MORE_INFORMATION callout
+          const callout = document.getElementById('need-info-callout');
+          if (inc.status === 'NEED_MORE_INFORMATION') {
+            callout.style.display = 'block';
+          } else {
+            callout.style.display = 'none';
+          }
+
+          // Render Evidence
+          const evContainer = document.getElementById('evidence-container');
+          if (inc.attachments && inc.attachments.length > 0) {
+            evContainer.innerHTML = inc.attachments.map(att => `
+              <div style="display:flex; justify-content:space-between; align-items:center; background:#1e293b; padding:0.6rem 1rem; border-radius:8px; border:1px solid #374151; margin-bottom:0.5rem;">
+                <div>
+                  <strong style="color:var(--text-primary); font-size:0.9rem;">📄 ${att.originalFilename}</strong>
+                  <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
+                    Size: ${(att.fileSizeBytes/1024).toFixed(1)} KB &bull; Type: ${att.mimeType} &bull; SHA-256: <span class="mono">${att.sha256Hash.substring(0, 16)}...</span>
+                  </div>
+                </div>
+                <button onclick="downloadEvidence('${inc.incidentNumber}', ${att.id}, '${att.originalFilename}')" class="btn btn-secondary btn-sm">
+                  ⬇️ Download
+                </button>
+              </div>
+            `).join('');
+          } else {
+            evContainer.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem;">No evidence files attached.</div>';
+          }
+
+          // Render Timeline Notes
+          const tlContainer = document.getElementById('notes-timeline');
+          if (inc.notes && inc.notes.length > 0) {
+            tlContainer.innerHTML = inc.notes.map(n => `
+              <div class="timeline-item">
+                <div class="timeline-header">
+                  <span class="timeline-author">${n.authorName} <small style="color:var(--text-muted); font-weight:normal;">(${n.authorRole.replace('ROLE_', '')})</small></span>
+                  <span class="timeline-time">${CIRS.ui.formatDate(n.createdAt)}</span>
+                </div>
+                <div class="timeline-body ${n.noteType === 'INFO_REQUEST' ? 'timeline-internal' : ''}">
+                  <div style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--cyber-cyan); margin-bottom:0.25rem;">
+                    ${n.noteType.replace(/_/g, ' ')}
+                  </div>
+                  ${n.content}
+                </div>
+              </div>
+            `).join('');
+          } else {
+            tlContainer.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem;">No updates logged yet.</div>';
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load incident details', err);
+        alert(err.message || 'Error loading incident');
+        window.location.href = '/user/dashboard.html';
+      }
+    }
+
+    window.downloadEvidence = async function(incNum, attId, filename) {
+      try {
+        const token = CIRS.auth.getToken();
+        const res = await fetch(`/api/v1/incidents/${incNum}/attachments/${attId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Download unauthorized or file unavailable.');
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (err) {
+        CIRS.ui.showToast(err.message || 'Failed to download file', 'danger');
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!CIRS.auth.checkRoleAndRedirect(['ROLE_USER', 'ROLE_ADMIN', 'ROLE_INVESTIGATOR'])) return;
+      CIRS.ui.renderNavbar();
+      loadIncident();
+
+      // Submit Response to Info Request
+      document.getElementById('respond-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const replyText = document.getElementById('reply-text').value.trim();
+        const filesInput = document.getElementById('reply-files');
+        const submitBtn = document.getElementById('reply-submit-btn');
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Submitting...';
+
+        const formData = new FormData();
+        formData.append('response', replyText);
+        for (let file of filesInput.files) {
+          formData.append('files', file);
+        }
+
+        try {
+          const res = await CIRS.api.postMultipart(`/incidents/${incidentNumber}/respond`, formData);
+          if (res.success) {
+            CIRS.ui.showToast('Response transmitted successfully!', 'success');
+            document.getElementById('reply-text').value = '';
+            filesInput.value = '';
+            loadIncident();
+          }
+        } catch (err) {
+          CIRS.ui.showToast(err.message || 'Failed to submit response', 'danger');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Submit Clarification to Investigator';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

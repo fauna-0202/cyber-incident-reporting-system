@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Citizen Incident Dashboard | CIRS</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar" id="main-navbar"></nav>
+
+  <main class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 style="font-size: 1.85rem; font-weight: 700;">My Incident Reports</h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">Track real-time status and investigator updates for your submissions</p>
+      </div>
+      <a href="/user/report-incident.html" class="btn btn-primary">
+        🚨 + Report New Incident
+      </a>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stat-grid" id="user-stats">
+      <div class="stat-card">
+        <span class="stat-label">Total Reports</span>
+        <span class="stat-value" id="stat-total">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">In Review / Assigned</span>
+        <span class="stat-value" id="stat-active" style="color: var(--cyber-cyan);">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Action Required (Need Info)</span>
+        <span class="stat-value" id="stat-action" style="color: var(--cyber-amber);">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Resolved / Closed</span>
+        <span class="stat-value" id="stat-resolved" style="color: var(--cyber-emerald);">0</span>
+      </div>
+    </div>
+
+    <!-- Incident List -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Submitted Cyber Incidents</div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Incident ID</th>
+              <th>Category</th>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Severity</th>
+              <th>Evidence</th>
+              <th>Reported On</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="incidents-tbody">
+            <tr>
+              <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading your incidents...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Cyber Incident Reporting System (CIRS)</p>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!CIRS.auth.checkRoleAndRedirect(['ROLE_USER'])) return;
+      CIRS.ui.renderNavbar('dashboard');
+
+      try {
+        const res = await CIRS.api.get('/incidents/my?size=50');
+        const tbody = document.getElementById('incidents-tbody');
+
+        if (res.success && res.data && res.data.content) {
+          const list = res.data.content;
+          
+          // Compute stats
+          document.getElementById('stat-total').innerText = list.length;
+          const activeCount = list.filter(i => ['SUBMITTED', 'UNDER_REVIEW', 'ASSIGNED', 'INVESTIGATING'].includes(i.status)).length;
+          const actionCount = list.filter(i => i.status === 'NEED_MORE_INFORMATION').length;
+          const resolvedCount = list.filter(i => ['RESOLVED', 'CLOSED'].includes(i.status)).length;
+
+          document.getElementById('stat-active').innerText = activeCount;
+          document.getElementById('stat-action').innerText = actionCount;
+          document.getElementById('stat-resolved').innerText = resolvedCount;
+
+          if (list.length === 0) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="8" style="text-align: center; padding: 3rem 1rem;">
+                  <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📂</div>
+                  <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">No Incident Reports Found</div>
+                  <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">You haven't submitted any cyber incidents yet.</p>
+                  <a href="/user/report-incident.html" class="btn btn-primary btn-sm">Submit Your First Report</a>
+                </td>
+              </tr>
+            `;
+            return;
+          }
+
+          tbody.innerHTML = list.map(item => `
+            <tr>
+              <td><a href="/user/incident-details.html?id=${item.incidentNumber}" class="mono" style="font-weight:600;">${item.incidentNumber}</a></td>
+              <td>${item.categoryName}</td>
+              <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${item.title}">
+                <strong>${item.title}</strong>
+              </td>
+              <td>${CIRS.ui.getStatusBadge(item.status)}</td>
+              <td>${CIRS.ui.getSeverityBadge(item.severity)}</td>
+              <td>📎 ${item.attachmentCount} file(s)</td>
+              <td>${CIRS.ui.formatDate(item.createdAt)}</td>
+              <td>
+                <a href="/user/incident-details.html?id=${item.incidentNumber}" class="btn btn-secondary btn-sm">
+                  Track Case →
+                </a>
+              </td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Error fetching incidents', err);
+        CIRS.ui.showToast(err.message || 'Failed to load incidents', 'danger');
+      }
+    });
+  </script>
+</body>
+</html>

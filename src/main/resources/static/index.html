@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Incident Reporting System (CIRS) | Official Portal</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar" id="main-navbar"></nav>
+
+  <main class="container">
+    <!-- Hero Section -->
+    <section style="text-align: center; padding: 3.5rem 1rem 2.5rem;">
+      <div style="display:inline-block; padding: 0.35rem 1rem; border-radius: 9999px; background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3); color: var(--cyber-cyan); font-size: 0.85rem; font-weight: 600; margin-bottom: 1.25rem;">
+        ⚡ Official Cyber Security Intake & Defense Gateway
+      </div>
+      <h1 style="font-size: 2.85rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 1rem; line-height: 1.15;">
+        Report & Neutralize <span style="background: linear-gradient(135deg, var(--cyber-cyan), var(--cyber-indigo)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Cyber Incidents</span> Securely
+      </h1>
+      <p style="font-size: 1.15rem; color: var(--text-secondary); max-width: 750px; margin: 0 auto 2.25rem;">
+        Providing citizens, organizations, and enterprise IT with an accredited, end-to-end encrypted channel to report breaches, ransomware, phishing attacks, and online financial fraud to dedicated cyber investigators.
+      </p>
+
+      <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+        <a href="/user/report-incident.html" class="btn btn-primary" style="font-size: 1.05rem; padding: 0.8rem 1.8rem;">
+          🚨 Submit Incident Report
+        </a>
+        <a href="/login.html" class="btn btn-secondary" style="font-size: 1.05rem; padding: 0.8rem 1.8rem;">
+          🔐 Sign In to Portal
+        </a>
+      </div>
+    </section>
+
+    <!-- Incident Categories Overview -->
+    <section style="margin-top: 2rem;">
+      <div class="card-header" style="border:none; margin-bottom: 1.5rem; text-align: center; justify-content: center;">
+        <h2 style="font-size: 1.6rem; font-weight: 700;">Recognized Threat Categories</h2>
+      </div>
+
+      <div id="category-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem;">
+        <!-- Loaded dynamically via JS -->
+        <div style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">Loading incident categories...</div>
+      </div>
+    </section>
+
+    <!-- Emergency Response Checklist -->
+    <section class="card" style="margin-top: 3rem; background: linear-gradient(180deg, rgba(31, 41, 55, 0.6) 0%, rgba(17, 24, 39, 0.9) 100%);">
+      <div class="card-title" style="color: var(--cyber-amber);">
+        ⚠️ Immediate Cyber Incident Response Checklist
+      </div>
+      <p style="color: var(--text-secondary); margin: 0.5rem 0 1.25rem; font-size: 0.9rem;">
+        If you are experiencing an active breach, ransomware outbreak, or suspicious intrusion:
+      </p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem;">
+        <div style="background: rgba(17, 24, 39, 0.7); padding: 1rem; border-radius: 8px; border-left: 3px solid var(--cyber-rose);">
+          <strong style="color: var(--text-primary); display:block; margin-bottom: 0.25rem;">1. Isolate Systems</strong>
+          <span style="font-size: 0.85rem; color: var(--text-secondary);">Disconnect Ethernet cables or disable Wi-Fi immediately. Do NOT power off systems as volatile RAM contains critical forensic artifacts.</span>
+        </div>
+        <div style="background: rgba(17, 24, 39, 0.7); padding: 1rem; border-radius: 8px; border-left: 3px solid var(--cyber-amber);">
+          <strong style="color: var(--text-primary); display:block; margin-bottom: 0.25rem;">2. Preserve Evidence</strong>
+          <span style="font-size: 0.85rem; color: var(--text-secondary);">Export firewall, DNS, and server log files. Take screenshots of ransom splash screens, phishing headers, or unexpected prompts.</span>
+        </div>
+        <div style="background: rgba(17, 24, 39, 0.7); padding: 1rem; border-radius: 8px; border-left: 3px solid var(--cyber-cyan);">
+          <strong style="color: var(--text-primary); display:block; margin-bottom: 0.25rem;">3. Submit Report</strong>
+          <span style="font-size: 0.85rem; color: var(--text-secondary);">Submit an incident via CIRS with your evidence files. Our investigative team will review and assign your case.</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Cyber Incident Reporting System (CIRS). Certified by National Information Security Framework.</p>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      CIRS.ui.renderNavbar('home');
+
+      try {
+        const res = await CIRS.api.get('/categories');
+        const grid = document.getElementById('category-grid');
+        if (res.success && res.data && res.data.length > 0) {
+          grid.innerHTML = res.data.map(cat => `
+            <div class="card" style="margin-bottom:0; padding:1.25rem; border:1px solid var(--border-color); transition: transform 0.2s;" onmouseover="this.style.borderColor='var(--cyber-cyan)'" onmouseout="this.style.borderColor='var(--border-color)'">
+              <h3 style="font-size:1.1rem; color:var(--cyber-cyan); margin-bottom:0.4rem;">${cat.name}</h3>
+              <p style="font-size:0.85rem; color:var(--text-secondary);">${cat.description || 'No description provided.'}</p>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Failed to load categories', err);
+      }
+    });
+  </script>
+</body>
+</html>
